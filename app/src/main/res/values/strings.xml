@@ -1,0 +1,4 @@
+ <resources>
+    <string name="app_name">MyGuardian</string>
+     <string name="title_activity_maps">Your Activity Title</string>
+</resources>

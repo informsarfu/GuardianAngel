@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#86B049"> <!-- Use #00FF00 for green color -->
+
+    <EditText
+        android:id="@+id/source"
+        android:layout_width="322dp"
+        android:layout_height="72dp"
+        android:hint="Enter Source Address"
+        android:inputType="text"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.492"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.301" />
+
+    <EditText
+        android:id="@+id/destination"
+        android:layout_width="320dp"
+        android:layout_height="72dp"
+        android:layout_marginTop="28dp"
+        android:hint="Enter Destination Address"
+        android:inputType="text"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.506"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.416" />
+
+    <Button
+        android:id="@+id/navigate"
+        android:layout_width="248dp"
+        android:layout_height="71dp"
+        android:onClick="startTrafficMonitoring"
+        android:text="Start Traffic Monitoring"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.496"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/destination"
+        app:layout_constraintVertical_bias="0.121" />
+
+    <Button
+        android:id="@+id/exportButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="onExportButtonClick"
+        android:text="Export Traffic Data"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/navigate"
+        app:layout_constraintVertical_bias="0.178" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
