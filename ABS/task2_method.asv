@@ -1,0 +1,203 @@
+clc
+clear all
+
+% Task 2
+numSamples = 100;
+P = [0.6 0.4; 0.85 0.15];
+mc = dtmc(P);
+roadConditions = simulate(mc, numSamples);
+roadConditions = roadConditions(2:end); 
+decelLim_lcw = -200;
+decelLim_hcw = -150;
+bestGain_lcw = 80000;
+bestGain_hcw = 90000;
+speeds = randi([20,60],1,numSamples);
+
+% collisions = NaN(numSamples, 1); % 0 = No collision, 1 = collision
+% switchCount_lcw = inf;
+% switchCount_hcw = inf;
+
+% Range of HR LCW
+HR_Mean_LCW = (80+65+61)/3;
+HR_STD_LCW = sqrt((14^2 + 15^2 + 14^2) / 3);
+HR_Range_LCW = normrnd(HR_Mean_LCW, HR_STD_LCW, 1, numSamples);
+
+% Range of RR LCW
+RR_Mean_LCW = (16+13+17)/3;
+RR_STD_LCW = sqrt((6^2 + 4^2 + 8^2) / 3);
+RR_Range_LCW = normrnd(RR_Mean_LCW, RR_STD_LCW, 1, numSamples);
+
+% 100 Rq and Tr Sampling for LCW
+RQ_LCW = HR_Range_LCW./RR_Range_LCW;
+Tr_LCW = 0.01*RQ_LCW;
+
+
+
+% Range of HR HCW
+HR_Mean_HCW = (95+71+92)/3;
+HR_STD_HCW = sqrt((26^2 + 21^2 + 23^2) / 3);
+HR_Range_HCW = normrnd(HR_Mean_HCW,HR_STD_HCW,1,numSamples);
+
+% Range of RR HCW
+RR_Mean_HCW = (21+14+26)/3;
+RR_STD_HCW = sqrt((14^2 + 5^2 + 16^2) / 3);
+RR_Range_HCW = normrnd(RR_Mean_HCW,RR_STD_HCW,1,numSamples);
+
+% 100 Rq and Tr Sampling for HCW
+RQ_HCW = HR_Range_HCW./RR_Range_HCW;
+Tr_HCW = 0.01*RQ_HCW;
+
+
+% USER 3 - LCW
+hr_lcw = normrnd(61, 14, 1, numSamples);
+rr_lcw = normrnd(17, 8, 1, numSamples);
+rq_lcw = hr_lcw./rr_lcw;
+
+
+% USER 3 - HCW
+hr_hcw = normrnd(92, 23, 1, numSamples);
+rr_hcw = normrnd(26, 16, 1, numSamples);
+rq_hcw = hr_hcw./rr_hcw;
+
+% ------------------------------------------------- EXECUTION --------------------------------------------------
+
+factor = 0.01;
+totalCollision = inf;
+bestFactor = 0.01;
+switchCount_lcw=0;
+switchCount_hcw=0;
+
+
+while factor<0.1
+    collision = 0;
+    tempSwitch_lcw = 0;
+    tempSwitch_hcw = 0;
+    newline;
+    disp("Calculating samples for " + factor + " Respiratory Setting")
+    for i = 1:100
+        curr_speed = speeds(i);
+        if roadConditions(i)==1
+            disp("Speed = " + curr_speed);
+
+            [A,B,C,D,Kess, Kr, Ke, uD] = designControl(secureRand(),bestGain_lcw);
+            set_param('LaneMaintainSystem/VehicleKinematics/Saturation','LowerLimit',num2str(decelLim_lcw))
+            set_param('LaneMaintainSystem/VehicleKinematics/vx','InitialCondition',num2str(curr_speed))
+
+            simModel_lcw = sim('LaneMaintainSystem.slx');
+            lastDistance = simModel_lcw.sx1.Data(end);
+            for t = 1:length(simModel_lcw.sx1.Time)
+                distance = simModel_lcw.sx1.Data(t);
+                if distance > 0
+                    lastTime = simModel_lcw.sx1.Time(t);
+                    break; % Exit the loop as soon as distance exceeds 0
+                end
+            end
+
+
+            % Importing the VehicleModelOnly.slx file to calculate the Action Time (Ta)
+            % LCW
+
+            Tr = RQ_LCW(i) * factor;
+            set_param('AdvisoryControl/Step', 'Time', num2str(Tr));
+            set_param('AdvisoryControl/Step', 'After', num2str(decelLim_lcw*1.1));
+            simModel_new_lcw = sim('AdvisoryControl.slx');
+            Ta = simModel_new_lcw.sx1.Time(end);
+
+            hStop = Ta + Tr;
+            disp("Average H stop for LCW is " + hStop);
+
+            if lastDistance >= 0
+                if hStop < lastTime
+                    Tr_3 = rq_lcw(i)*0.01;
+                    set_param('AdvisoryControl/Step', 'Time', num2str(Tr_3));
+                    set_param('AdvisoryControl/Step', 'After', num2str(decelLim_lcw*1.1));
+                    simModel_new_lcw = sim('AdvisoryControl.slx');
+                    Ta_3 = simModel_new_lcw.sx1.Time(end);
+        
+                    hStop_3 = Ta_3 + Tr_3;
+                    disp("User3 H stop for LCW is " + hStop_3);
+                    if hStop_3<lastTime
+                        tempSwitch_lcw = tempSwitch_lcw + 1;
+                        disp("No Collision happened, Switch to Human")
+                    else
+                        collision=collision+1;
+                        disp("Collision Happened")
+                    end
+                else
+                    collision = collision+1;
+                    disp("Collision Happened")
+                end
+            else
+                disp("No Collision happened")
+            end
+        else
+            disp("Speed = " + curr_speed);
+
+            [A,B,C,D,Kess, Kr, Ke, uD] = designControl(secureRand(),bestGain_hcw);
+            set_param('LaneMaintainSystem/VehicleKinematics/Saturation','LowerLimit',num2str(decelLim_hcw))
+            set_param('LaneMaintainSystem/VehicleKinematics/vx','InitialCondition',num2str(curr_speed))
+
+            simModel_hcw = sim('LaneMaintainSystem.slx');
+            lastDistance = simModel_hcw.sx1.Data(end);
+            for t = 1:length(simModel_hcw.sx1.Time)
+                distance = simModel_hcw.sx1.Data(t);
+                if distance > 0
+                    lastTime = simModel_hcw.sx1.Time(t);
+                    break;
+                end
+            end
+
+
+            % Importing the VehicleModelOnly.slx file to calculate the Action Time (Ta)
+            % HCW
+
+            Tr = RQ_LCW(i) * factor;
+            set_param('AdvisoryControl/Step', 'Time', num2str(Tr));
+            set_param('AdvisoryControl/Step', 'After', num2str(decelLim_hcw*1.1));
+            simModel_new_hcw = sim('AdvisoryControl.slx');
+            Ta = simModel_new_hcw.sx1.Time(end);
+
+            hStop = Ta + Tr;
+            disp("Average H stop for HCW is " + hStop);
+
+            if lastDistance >= 0
+                if hStop < lastTime
+                    Tr_3 = rq_hcw(i)*0.01;
+                    set_param('AdvisoryControl/Step', 'Time', num2str(Tr_3));
+                    set_param('AdvisoryControl/Step', 'After', num2str(decelLim_hcw*1.1));
+                    simModel_new_lcw = sim('AdvisoryControl.slx');
+                    Ta_3 = simModel_new_lcw.sx1.Time(end);
+        
+                    hStop_3 = Ta_3 + Tr_3;
+                    disp("User3 H stop for HCW is " + hStop_3);
+                    if hStop_3<lastTime
+                        tempSwitch_hcw = tempSwitch_hcw + 1;
+                        disp("No Collision happened, Switch to Human")
+                    else
+                        collision=collision+1;
+                        disp("Collision Happened")
+                    end
+                else
+                    collision = collision + 1;
+                    disp("Collision happened")
+                end
+            else
+                disp("No Collision happened")
+            end
+        end
+    end
+    if collision<totalCollision
+        totalCollision = collision;
+        bestFactor = factor;
+        switchCount_lcw = tempSwitch_lcw;
+        switchCount_hcw = tempSwitch_hcw;
+    end
+    factor = factor + 0.01;
+    collision = 0;
+end
+
+newline
+disp("Best Factor = " + bestFactor);
+disp("Total Minimum Collision = "+ totalCollision);
+disp("Total Switch for Good Condition = "+ switchCount_lcw);
+disp("Total Switch for Poor Condition = "+ switchCount_hcw);
