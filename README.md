@@ -38,7 +38,7 @@ The Health Monitoring Application is a comprehensive mobile application designed
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/informsarfu/Health-Monitoring-Application.git
+   [git clone https://github.com/informsarfu/Health-Monitoring-Application.git](https://github.com/informsarfu/Health-Monitoring-Application.git)
 
 2. Open the project in Android Studio.
 3. Add your Google API key to the appropriate configuration file.
