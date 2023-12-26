@@ -1,4 +1,4 @@
-# Health Monitoring Application
+# Health Monitoring Application (Android)
 
 ## Overview
 
@@ -51,7 +51,7 @@ The Health Monitoring Application is a comprehensive mobile application designed
 We welcome contributions! If you have suggestions, bug reports, or want to contribute to the project, please follow our Contribution Guidelines.
 
 ### License
-This project is licensed under the 
+This project is licensed under the [MIT License](LICENSE)
 
 ### Acknowledgments
 Thanks to Google for providing the Routes API.
